@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Détecteurs pour collecte de données trafic -->
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+            xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+
+    <!-- Détecteurs inductifs aux intersections (simulent capteurs RSU) -->
+    <inductionLoop id="det_J1_in" lane="E_N1_J1_0" pos="150" freq="60" 
+                   file="detector_output.xml"/>
+    <inductionLoop id="det_J1_out" lane="E_J1_J2_0" pos="20" freq="60" 
+                   file="detector_output.xml"/>
+    
+    <inductionLoop id="det_J2_in" lane="E_J1_J2_0" pos="150" freq="60" 
+                   file="detector_output.xml"/>
+    <inductionLoop id="det_J2_out" lane="E_J2_N2_0" pos="20" freq="60" 
+                   file="detector_output.xml"/>
+    
+    <inductionLoop id="det_J3_in" lane="E_J1_J3_0" pos="150" freq="60" 
+                   file="detector_output.xml"/>
+    <inductionLoop id="det_J4_in" lane="E_J2_J4_0" pos="150" freq="60" 
+                   file="detector_output.xml"/>
+
+    <!-- Détecteurs de file d'attente pour mesurer congestion -->
+    <laneAreaDetector id="queue_J1" lane="E_N1_J1_0" pos="50" endPos="150" 
+                      freq="30" file="queue_output.xml"/>
+    <laneAreaDetector id="queue_J2" lane="E_J1_J2_0" pos="50" endPos="150" 
+                      freq="30" file="queue_output.xml"/>
+    <laneAreaDetector id="queue_J3" lane="E_J1_J3_0" pos="50" endPos="150" 
+                      freq="30" file="queue_output.xml"/>
+    <laneAreaDetector id="queue_J4" lane="E_J2_J4_0" pos="50" endPos="150" 
+                      freq="30" file="queue_output.xml"/>
+
+</additional>
+

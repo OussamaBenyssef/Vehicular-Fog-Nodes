@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Fog Véhiculaire</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <header class="header">
+        <h1>Simulation Fog Computing Véhiculaire</h1>
+        <div class="mode-banner" id="modeBanner">
+            <span class="mode-icon" id="modeIcon">📊</span>
+            <span class="mode-name" id="modeName">Chargement...</span>
+            <span class="mode-features">
+                <span id="fogStatus" class="feature-badge">🌫️ Fog</span>
+                <span id="cloudStatus" class="feature-badge">☁️ Cloud</span>
+                <span id="scootBadge" class="feature-badge">🚦 SCOOT</span>
+            </span>
+        </div>
+        <div class="sync-status">
+            <span class="sync-indicator" id="syncIndicator"></span>
+            <span id="simTime">T=0.0s</span>
+            <span id="phase" class="phase-badge congestion">Congestion</span>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <!-- Panel 1: Carte Trafic -->
+        <section class="panel panel-map">
+            <h2>Trafic Temps Réel</h2>
+            <div class="map-container">
+                <canvas id="trafficCanvas" width="600" height="600"></canvas>
+            </div>
+            <div class="map-legend">
+                <span><span class="dot blue"></span> Normal</span>
+                <span><span class="dot green"></span> Fog Node</span>
+                <span><span class="dot orange"></span> Offloading</span>
+                <span><span class="dot rsu"></span> RSU</span>
+            </div>
+
+            <!-- Distribution Chart -->
+            <div class="distribution-chart-container">
+                <h3>Distribution traitement</h3>
+                <canvas id="processingChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Panel 2: Topologie Fog + Statistiques -->
+        <section class="panel panel-topology">
+            <h2>Topologie Fog</h2>
+            <div class="topology-container">
+                <canvas id="topologyCanvas" width="380" height="220"></canvas>
+            </div>
+            <div class="topology-stats">
+                <div class="stat">
+                    <span class="label">Cloud</span>
+                    <span class="value" id="cloudLoad">0%</span>
+                </div>
+                <div class="stat">
+                    <span class="label">RSUs</span>
+                    <span class="value" id="rsuCount">4</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Fog Nodes</span>
+                    <span class="value" id="fogNodeCount">0</span>
+                </div>
+            </div>
+
+            <!-- Statistiques intégrées -->
+            <h2>Statistiques</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="vehicleCount">0</div>
+                    <div class="stat-label">Véhicules</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="activeFogNodes">0</div>
+                    <div class="stat-label">Fog Nodes</div>
+                </div>
+                <div class="stat-card offloading-action">
+                    <div class="stat-value" id="offloadingCount">0</div>
+                    <div class="stat-label">En Offload</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgLatency">0 ms</div>
+                    <div class="stat-label">Latence Moy.</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="tasksProcessed">0</div>
+                    <div class="stat-label">Tâches</div>
+                </div>
+                <div class="stat-card fog-action">
+                    <div class="stat-value" id="totalTlAdjusted">0</div>
+                    <div class="stat-label">Feux Ajustés</div>
+                </div>
+        </section>
+
+        <!-- Panel 4: SCOOT Adaptatif -->
+        <section class="panel panel-scoot">
+            <h2>🚦 SCOOT Adaptatif Distribué</h2>
+            <div class="scoot-header">
+                <div class="scoot-status" id="scootPanelStatus">
+                    <span class="status-indicator off" id="scootIndicator"></span>
+                    <span id="scootStatusText">Désactivé</span>
+                </div>
+                <div class="scoot-cycle">
+                    <span class="label">Cycle Global:</span>
+                    <span class="value" id="scootCycleTime">60s</span>
+                </div>
+            </div>
+
+            <div class="scoot-intersections">
+                <div class="intersection-card" id="scoot-J1">
+                    <div class="intersection-id">J1</div>
+                    <div class="intersection-data">
+                        <div><span class="label">Split E-W:</span> <span id="split-J1-ew">25s</span></div>
+                        <div><span class="label">Split N-S:</span> <span id="split-J1-ns">20s</span></div>
+                        <div><span class="label">Offset:</span> <span id="offset-J1">0s</span></div>
+                        <div><span class="label">PI:</span> <span id="pi-J1">1.00</span></div>
+                    </div>
+                </div>
+                <div class="intersection-card" id="scoot-J2">
+                    <div class="intersection-id">J2</div>
+                    <div class="intersection-data">
+                        <div><span class="label">Split E-W:</span> <span id="split-J2-ew">25s</span></div>
+                        <div><span class="label">Split N-S:</span> <span id="split-J2-ns">20s</span></div>
+                        <div><span class="label">Offset:</span> <span id="offset-J2">0s</span></div>
+                        <div><span class="label">PI:</span> <span id="pi-J2">1.00</span></div>
+                    </div>
+                </div>
+                <div class="intersection-card" id="scoot-J3">
+                    <div class="intersection-id">J3</div>
+                    <div class="intersection-data">
+                        <div><span class="label">Split E-W:</span> <span id="split-J3-ew">25s</span></div>
+                        <div><span class="label">Split N-S:</span> <span id="split-J3-ns">20s</span></div>
+                        <div><span class="label">Offset:</span> <span id="offset-J3">0s</span></div>
+                        <div><span class="label">PI:</span> <span id="pi-J3">1.00</span></div>
+                    </div>
+                </div>
+                <div class="intersection-card" id="scoot-J4">
+                    <div class="intersection-id">J4</div>
+                    <div class="intersection-data">
+                        <div><span class="label">Split E-W:</span> <span id="split-J4-ew">25s</span></div>
+                        <div><span class="label">Split N-S:</span> <span id="split-J4-ns">20s</span></div>
+                        <div><span class="label">Offset:</span> <span id="offset-J4">0s</span></div>
+                        <div><span class="label">PI:</span> <span id="pi-J4">1.00</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scoot-actions" id="scootActions">
+                <h4>Dernières décisions SCOOT</h4>
+                <div id="scootActionsList"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js?v=4"></script>
+</body>
+
+</html>

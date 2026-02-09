@@ -1,0 +1,608 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% ============================================
+% PACKAGES
+% ============================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,shapes.symbols}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+
+% ============================================
+% THEME ET COULEURS
+% ============================================
+\usetheme{Madrid}
+\usecolortheme{whale}
+
+\definecolor{fogblue}{RGB}{37, 99, 235}
+\definecolor{foggreen}{RGB}{22, 163, 74}
+\definecolor{fogred}{RGB}{220, 38, 38}
+\definecolor{fogyellow}{RGB}{202, 138, 4}
+\definecolor{codebg}{RGB}{241, 245, 249}
+
+\setbeamercolor{structure}{fg=fogblue}
+\setbeamercolor{title}{fg=white,bg=fogblue}
+\setbeamercolor{frametitle}{fg=white,bg=fogblue}
+
+% ============================================
+% LISTINGS CONFIG
+% ============================================
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    breaklines=true,
+    keywordstyle=\color{fogblue}\bfseries,
+    commentstyle=\color{foggreen},
+    stringstyle=\color{fogred},
+    numbers=none,
+    showstringspaces=false
+}
+
+% ============================================
+% TITRE
+% ============================================
+\title[Fog-Assisted Vehicular Computing]{Fog-Assisted Vehicular Computing}
+\subtitle{Gestion de la Congestion et Optimisation du Task Offloading}
+\author{BENYSSEF Oussama}
+\institute{Master 2 - Fog \& Edge Computing}
+\date{F\'evrier 2026}
+
+\begin{document}
+
+% ============================================
+% PAGE DE TITRE
+% ============================================
+\begin{frame}
+\titlepage
+\end{frame}
+
+% ============================================
+% PLAN
+% ============================================
+\begin{frame}{Plan de la Pr\'esentation}
+\tableofcontents
+\end{frame}
+
+% ############################################
+% SECTION 1 : PROBLÉMATIQUE
+% ############################################
+\section{Probl\'ematique}
+
+\begin{frame}{Contexte : R\'eseaux V\'ehiculaires (VANET)}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{D\'efinition :}
+\begin{itemize}
+    \item R\'eseau ad-hoc form\'e par v\'ehicules communicants
+    \item Communications V2V, V2I, V2N, V2P
+    \item Mobilit\'e \'elev\'ee (50-150 km/h)
+    \item Topologie dynamique
+\end{itemize}
+
+\column{0.5\textwidth}
+\textbf{Applications critiques :}
+\begin{itemize}
+    \item \'Evitement de collision
+    \item Gestion intelligente du trafic
+    \item Conduite autonome
+    \item Services d'urgence
+\end{itemize}
+\end{columns}
+
+\vspace{0.3cm}
+\begin{alertblock}{Exigences de latence}
+S\'ecurit\'e routi\`ere : $<$ 20 ms | Infotainment : $<$ 100 ms | Fiabilit\'e : 99.999\%
+\end{alertblock}
+\end{frame}
+
+\begin{frame}{D\'efis et Limites du Cloud Computing}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{D\'efis des VANET :}
+\begin{itemize}
+    \item \textcolor{fogred}{Congestion r\'eseau} : Pics de trafic
+    \item \textcolor{fogred}{Latence \'elev\'ee} : 100-200 ms (Cloud)
+    \item \textcolor{fogred}{Surcharge Cloud} : Centralisation
+    \item Bande passante limit\'ee
+    \item Mobilit\'e des n\oe uds
+\end{itemize}
+
+\column{0.5\textwidth}
+\textbf{Limites du Cloud seul :}
+\begin{itemize}
+    \item[$\times$] RTT trop \'elev\'e ($\sim$125 ms)
+    \item[$\times$] Point unique de d\'efaillance
+    \item[$\times$] Co\^uts de bande passante
+    \item[$\times$] Pas de conscience locale
+    \item[$\times$] Inadapt\'e au temps r\'eel
+\end{itemize}
+\end{columns}
+
+\vspace{0.5cm}
+\begin{block}{Constat}
+Le Cloud seul \textbf{ne peut pas} r\'epondre aux exigences des applications v\'ehiculaires temps r\'eel.
+\end{block}
+\end{frame}
+
+% ############################################
+% SECTION 2 : OBJECTIF PRINCIPAL
+% ############################################
+\section{Objectif Principal}
+
+\begin{frame}{Objectif du Projet}
+\textbf{Objectif principal :}
+\begin{enumerate}
+    \item \textbf{G\'erer la congestion} du trafic routier en temps r\'eel
+    \item \textbf{Optimiser le task offloading} dans un environnement v\'ehiculaire
+    \item \textbf{D\'emontrer l'apport} du Fog/Edge Computing
+\end{enumerate}
+
+\vspace{0.5cm}
+\textbf{Apport du Fog Computing :}
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+    \draw[fill=fogred!20, rounded corners] (0,3) rectangle (3,4);
+    \node at (1.5,3.5) {\textbf{Cloud}};
+    \node at (5,3.5) {125 ms - 5\% des t\^aches};
+    
+    \draw[fill=fogyellow!20, rounded corners] (0,1.5) rectangle (3,2.5);
+    \node at (1.5,2) {\textbf{Fog (RSU)}};
+    \node at (5,2) {22 ms - 35\% des t\^aches};
+    
+    \draw[fill=foggreen!20, rounded corners] (0,0) rectangle (3,1);
+    \node at (1.5,0.5) {\textbf{Edge}};
+    \node at (5,0.5) {5 ms - 60\% des t\^aches};
+    
+    \draw[->, thick] (1.5,1) -- (1.5,1.5);
+    \draw[->, thick] (1.5,2.5) -- (1.5,3);
+\end{tikzpicture}
+\end{center}
+
+\textbf{R\'esultat attendu :} R\'eduction de latence $>$ 80\%
+\end{frame}
+
+% ############################################
+% SECTION 3 : MÉTHODOLOGIE
+% ############################################
+\section{M\'ethodologie Adopt\'ee}
+
+\begin{frame}{Sc\'enarios de Simulation}
+\textbf{3 sc\'enarios comparatifs :}
+
+\begin{table}
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Sc\'enario} & \textbf{Fog Nodes} & \textbf{SCOOT} & \textbf{Description} \\
+\midrule
+Edge + Cloud & 0\% & D\'esactiv\'e & R\'ef\'erence (sans fog) \\
+Full Fog - Low & $\sim$15\% & Actif & Peu de fog nodes \\
+Full Fog - High & $\sim$50\% & Actif & Beaucoup de fog nodes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+\textbf{Architecture 3-tiers :}
+\begin{itemize}
+    \item \textbf{Edge} : V\'ehicules (traitement local, 500 MIPS)
+    \item \textbf{Fog} : RSU + V\'ehicules fog-capable (1500-5000 MIPS)
+    \item \textbf{Cloud} : Serveur distant (20000 MIPS, 125 ms RTT)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Strat\'egie d'Offloading}
+\textbf{Mod\`ele math\'ematique de d\'ecision :}
+
+\begin{equation}
+\text{destination} = \arg\min_{d \in \{local, fog, cloud\}} \left( T_d + \alpha \cdot L_d + \beta \cdot E_d \right)
+\end{equation}
+
+O\`u : $T_d$ = temps d'ex\'ecution, $L_d$ = latence, $E_d$ = co\^ut \'energ\'etique
+
+\vspace{0.3cm}
+\textbf{Temps total d'offloading :}
+\begin{align}
+T_{offload} &= T_{upload} + T_{exec} + T_{download} \\
+T_{upload} &= \frac{D_{input}}{BW_{up}}, \quad T_{exec} = \frac{I}{MIPS}, \quad T_{download} = \frac{D_{output}}{BW_{down}}
+\end{align}
+
+\textbf{Coefficients :} $\alpha = 0.4$ (latence), $\beta = 0.3$ (\'energie), $\gamma = 0.3$ (temps)
+\end{frame}
+
+\begin{frame}{Outils et Algorithmes Utilis\'es}
+\begin{table}
+\centering
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Outil} & \textbf{R\^ole} \\
+\midrule
+\textbf{SUMO} & Simulateur de trafic routier (TraCI API) \\
+\textbf{iFogSim} & Simulateur Fog Computing (Java, calcul m\'etriques) \\
+\textbf{Python/Flask} & Orchestrateur + Dashboard temps r\'eel \\
+\textbf{SCOOT} & Algorithme adaptatif de contr\^ole des feux \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+\textbf{Algorithme SCOOT (Split Cycle Offset Optimization Technique) :}
+\begin{itemize}
+    \item Ajustement dynamique des phases de feux
+    \item Bas\'e sur les files d'attente en temps r\'eel
+    \item Optimisation par zone RSU
+    \item D\'ecisions : split (dur\'ee phases), cycle, offset
+\end{itemize}
+\end{frame}
+
+% ############################################
+% SECTION 4 : PARAMÈTRES DE SIMULATION
+% ############################################
+\section{Param\`etres de Simulation}
+
+\begin{frame}{Param\`etres de Simulation}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Infrastructure :}
+\begin{table}
+\centering
+\scriptsize
+\begin{tabular}{ll}
+\toprule
+\textbf{Param\`etre} & \textbf{Valeur} \\
+\midrule
+Dur\'ee simulation & 300 s \\
+Nombre RSU & 4 \\
+Port\'ee RSU & 300 m \\
+Capacit\'e RSU & 30 v\'eh. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Capacit\'es de calcul :}
+\begin{table}
+\centering
+\scriptsize
+\begin{tabular}{ll}
+\toprule
+\textbf{Niveau} & \textbf{MIPS} \\
+\midrule
+V\'ehicule local & 500 \\
+V\'ehicule fog & 1500 \\
+RSU & 5000 \\
+Cloud & 20000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\column{0.5\textwidth}
+\textbf{T\^aches g\'en\'er\'ees :}
+\begin{table}
+\centering
+\scriptsize
+\begin{tabular}{ll}
+\toprule
+\textbf{Param\`etre} & \textbf{Valeur} \\
+\midrule
+Taille entr\'ee & 0.5 - 5.0 Mb \\
+Taille sortie & 0.1 - 1.0 Mb \\
+Instructions & 50 - 500 MI \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Bandes passantes :}
+\begin{table}
+\centering
+\scriptsize
+\begin{tabular}{ll}
+\toprule
+\textbf{Lien} & \textbf{D\'ebit} \\
+\midrule
+V2V & 10 Mbps \\
+V2I (RSU) & 20 Mbps \\
+Cloud up/down & 5/10 Mbps \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{columns}
+\end{frame}
+
+\begin{frame}{D\'etail des Sc\'enarios de Trafic}
+\begin{table}
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Param\`etre} & \textbf{Edge+Cloud} & \textbf{Low Fog} & \textbf{High Fog} \\
+\midrule
+D\'ebit total (v\'eh/h) & $\sim$1300 & $\sim$1370 & $\sim$1300 \\
+V\'ehicules standards & 85\% & 85\% & 50\% \\
+V\'ehicules fog-capable & 15\%* & 15\% & 50\% \\
+Bus/Camions & P\'eriode 90-120s & P\'eriode 90-120s & P\'eriode 60s \\
+\midrule
+Fog activ\'e & Non & Oui & Oui \\
+SCOOT activ\'e & Non & Oui & Oui \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\footnotesize{* En mode Edge+Cloud, les v\'ehicules fog-capable existent mais ne sont pas utilis\'es pour l'offloading.}
+\end{frame}
+
+% ############################################
+% SECTION 5 : MÉTRIQUES ÉVALUÉES
+% ############################################
+\section{M\'etriques \'Evalu\'ees}
+
+\begin{frame}{M\'etriques \'Evalu\'ees}
+\begin{table}
+\centering
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{M\'etrique} & \textbf{Description} \\
+\midrule
+\textbf{Latence moyenne} & Temps moyen de traitement des t\^aches (ms) \\
+\textbf{Fog Nodes actifs} & Nombre de v\'ehicules fog-capable en zone RSU \\
+\textbf{Feux ajust\'es} & Nombre d'ajustements SCOOT des feux \\
+\textbf{V\'ehicules rerout\'es} & Nombre de reroutages suite \`a congestion \\
+\textbf{Congestion max} & Taux de saturation maximal par zone \\
+\textbf{Distribution traitement} & R\'epartition Edge / Fog / Cloud (\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+\textbf{Formule de latence moyenne :}
+\begin{equation}
+L_{avg} = \frac{L_{edge} \times P_{edge} + L_{fog} \times P_{fog} + L_{cloud} \times P_{cloud}}{100}
+\end{equation}
+\end{frame}
+
+% ############################################
+% SECTION 6 : RÉSULTATS
+% ############################################
+\section{R\'esultats Obtenus}
+
+\begin{frame}{R\'esultats : Tableau Comparatif}
+\begin{table}
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{M\'etrique} & \textbf{Edge+Cloud} & \textbf{Low Fog} & \textbf{High Fog} \\
+\midrule
+V\'ehicules max & 38 & 34 & 47 \\
+Fog Nodes actifs & 0 & 6 (18\%) & 28 (60\%) \\
+Feux ajust\'es & 0 & 53 & 360 \\
+V\'ehicules rerout\'es & 0 & 1147 & 2077 \\
+Congestion max & 57\% & 50\% & 90\%* \\
+\midrule
+Latence moyenne & $\sim$125 ms & $\sim$28 ms & $\sim$20 ms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\footnotesize{* Congestion \'elev\'ee due au d\'ebit v\'ehiculaire plus important, mais g\'er\'ee efficacement par SCOOT.}
+
+\vspace{0.3cm}
+\begin{block}{Observation cl\'e}
+Avec 60\% de fog nodes (High Fog), le syst\`eme ajuste \textbf{360 feux} et reroute \textbf{2077 v\'ehicules}, r\'eduisant la latence de 84\%.
+\end{block}
+\end{frame}
+
+\begin{frame}{R\'esultats : Latence par Sc\'enario}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    width=12cm,
+    height=6cm,
+    ylabel={Latence moyenne (ms)},
+    symbolic x coords={Edge+Cloud, Low Fog, High Fog},
+    xtick=data,
+    ymin=0, ymax=150,
+    bar width=25pt,
+    nodes near coords,
+    nodes near coords align={vertical},
+    legend pos=north east,
+    ymajorgrids=true,
+    grid style=dashed,
+]
+\addplot[fill=fogred!70] coordinates {(Edge+Cloud,125) (Low Fog,28) (High Fog,20)};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\textbf{R\'eduction de latence :}
+\begin{itemize}
+    \item Low Fog vs Edge+Cloud : \textcolor{foggreen}{-78\%} (125 $\rightarrow$ 28 ms)
+    \item High Fog vs Edge+Cloud : \textcolor{foggreen}{-84\%} (125 $\rightarrow$ 20 ms)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{R\'esultats : Actions Fog (Feux et Reroutages)}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    width=11cm,
+    height=5.5cm,
+    ylabel={Nombre d'actions},
+    symbolic x coords={Edge+Cloud, Low Fog, High Fog},
+    xtick=data,
+    ymin=0, ymax=2500,
+    bar width=18pt,
+    legend pos=north west,
+    ymajorgrids=true,
+    grid style=dashed,
+]
+\addplot[fill=fogblue!70] coordinates {(Edge+Cloud,0) (Low Fog,53) (High Fog,360)};
+\addplot[fill=fogyellow!70] coordinates {(Edge+Cloud,0) (Low Fog,1147) (High Fog,2077)};
+\legend{Feux ajust\'es, V\'ehicules rerout\'es}
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\textbf{Impact du Fog Computing :}
+\begin{itemize}
+    \item Plus de fog nodes $\Rightarrow$ plus de d\'ecisions prises localement
+    \item SCOOT optimise les phases de feux en fonction des files d'attente
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{R\'esultats : Exemples de D\'ecisions SCOOT}
+\textbf{D\'ecisions SCOOT observ\'ees (High Fog) :}
+
+\begin{lstlisting}[language=bash]
+[SCOOT SPLIT] J1: EW=13s, NS=37s (PI=0.10, NS queue=63m, EW queue=0m)
+[EXEC FOG->SUMO] J1: ALTERNANCE FORCEE vers E-W (congestion critique)
+[EXEC FOG->SUMO] RSU_J1: 29 vehicules REROUTES
+[EXEC CRITIQUE] RSU_J1: URGENCE - 29 vehicules reroutes, feu bascule!
+\end{lstlisting}
+
+\vspace{0.3cm}
+\textbf{Interpr\'etation :}
+\begin{itemize}
+    \item \textbf{PI} (Performance Index) : Indicateur de congestion (0 = fluide, 1 = bloqu\'e)
+    \item \textbf{Split} : R\'epartition du temps de vert (NS vs EW)
+    \item \textbf{Queue} : Longueur des files d'attente en m\`etres
+    \item D\'ecisions en \textbf{temps r\'eel} ($<$ 50 ms)
+\end{itemize}
+\end{frame}
+
+% ############################################
+% SECTION 7 : DISCUSSION
+% ############################################
+\section{Discussion}
+
+\begin{frame}{Discussion des R\'esultats}
+\textbf{Observations principales :}
+
+\begin{enumerate}
+    \item \textbf{R\'eduction de latence significative} : 84\% avec High Fog
+    \begin{itemize}
+        \item Traitement local \'evite le RTT cloud (125 ms $\rightarrow$ 20 ms)
+        \item Plus de fog nodes = meilleure r\'epartition de charge
+    \end{itemize}
+    
+    \item \textbf{SCOOT plus efficace avec plus de fog nodes}
+    \begin{itemize}
+        \item High Fog : 360 ajustements vs Low Fog : 53 ajustements
+        \item D\'ecisions plus fr\'equentes gr\^ace \`a la latence r\'eduite
+    \end{itemize}
+    
+    \item \textbf{Gestion proactive de la congestion}
+    \begin{itemize}
+        \item 2077 reroutages en High Fog (vs 0 en Edge+Cloud)
+        \item Anticipe les embouteillages au lieu de les subir
+    \end{itemize}
+\end{enumerate}
+
+\begin{alertblock}{Limite observ\'ee}
+High Fog montre 90\% de congestion car le d\'ebit v\'ehiculaire est plus \'elev\'e. Mais cette congestion est \textbf{g\'er\'ee activement} contrairement \`a Edge+Cloud.
+\end{alertblock}
+\end{frame}
+
+\begin{frame}{Avantages et Limites}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Avantages du Fog V\'ehiculaire :}
+\begin{itemize}
+    \item[$\checkmark$] Latence $<$ 25 ms
+    \item[$\checkmark$] D\'ecisions temps r\'eel
+    \item[$\checkmark$] Pas de point unique de d\'efaillance
+    \item[$\checkmark$] \'Economie bande passante cloud
+    \item[$\checkmark$] Conscience du contexte local
+\end{itemize}
+
+\column{0.5\textwidth}
+\textbf{Limites identifi\'ees :}
+\begin{itemize}
+    \item[$\times$] D\'epend de la densit\'e fog
+    \item[$\times$] Mobilit\'e = instabilit\'e
+    \item[$\times$] H\'et\'erog\'en\'eit\'e des ressources
+    \item[$\times$] Infrastructure RSU n\'ecessaire
+    \item[$\times$] S\'ecurit\'e complexe
+\end{itemize}
+\end{columns}
+\end{frame}
+
+% ############################################
+% SECTION 8 : CONCLUSION
+% ############################################
+\section{Conclusion et Perspectives}
+
+\begin{frame}{Conclusion}
+\textbf{Ce que nous avons d\'emontr\'e :}
+
+\begin{enumerate}
+    \item Le \textbf{Fog Computing} r\'eduit la latence de \textbf{84\%} (125 $\rightarrow$ 20 ms)
+    \item L'algorithme \textbf{SCOOT} optimise les feux en temps r\'eel
+    \item Plus de \textbf{fog nodes} = meilleure gestion du trafic
+    \item L'architecture \textbf{Edge-Fog-Cloud} est efficace pour les VANET
+\end{enumerate}
+
+\vspace{0.5cm}
+\begin{block}{Message cl\'e}
+Le Fog Computing V\'ehiculaire n'est pas une alternative au Cloud, mais un \textbf{compl\'ement essentiel} pour les applications temps r\'eel critiques.
+\end{block}
+\end{frame}
+
+\begin{frame}{Perspectives}
+\textbf{Am\'eliorations futures :}
+
+\begin{itemize}
+    \item \textbf{Machine Learning} : Pr\'ediction de congestion par mod\`eles ML
+    \item \textbf{5G/6G} : Int\'egration C-V2X pour latence $<$ 1 ms
+    \item \textbf{Federated Learning} : Apprentissage distribu\'e sur v\'ehicules
+    \item \textbf{S\'ecurit\'e} : Impl\'ementation PKI (IEEE 1609.2)
+    \item \textbf{Platoon} : Application aux convois de camions autonomes
+\end{itemize}
+
+\vspace{0.5cm}
+\textbf{\'Evolution technologique :}
+\begin{table}
+\centering
+\scriptsize
+\begin{tabular}{lccc}
+\toprule
+\textbf{Param\`etre} & \textbf{DSRC} & \textbf{5G C-V2X} & \textbf{6G} \\
+\midrule
+Latence & 20-50 ms & 1-10 ms & $<$ 1 ms \\
+D\'ebit & 27 Mbps & 1 Gbps & 1 Tbps \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}{R\'ef\'erences}
+\footnotesize
+\begin{thebibliography}{9}
+\bibitem{bonomi2012} Bonomi, F. et al. (2012). "Fog Computing and Its Role in the Internet of Things." MCC Workshop.
+
+\bibitem{hou2016} Hou, X. et al. (2016). "Vehicular Fog Computing: A Viewpoint of Vehicles as the Infrastructures." IEEE VTC.
+
+\bibitem{ifogsim} Gupta, H. et al. (2017). iFogSim: A toolkit for modeling and simulation of resource management techniques in IoT, Edge and Fog computing.
+
+\bibitem{scoot} Hunt, P.B. et al. (1981). "SCOOT - A Traffic Responsive Method of Coordinating Signals." TRRL Report.
+\end{thebibliography}
+\end{frame}
+
+\begin{frame}
+\centering
+\Huge\textbf{Merci pour votre attention}
+
+\vspace{1cm}
+\Large Questions ?
+\end{frame}
+
+\end{document}

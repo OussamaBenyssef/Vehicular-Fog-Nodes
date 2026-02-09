@@ -1,0 +1,23 @@
+\frametitle{D\'emonstration}
+\textbf{Lancement :}
+
+\begin{lstlisting}[language=bash]
+# Terminal 1 - iFogSim
+cd simulation/ifogsim
+java -cp "out;jars/*" org.fog.test.perfeval.VehicularFogSimulation
+
+# Terminal 2 - Python + SUMO
+cd simulation
+python server.py --dashboard --gui
+\end{lstlisting}
+
+\vspace{0.3cm}
+\textbf{Acc\`es Dashboard :} \url{http://localhost:5000}
+
+\begin{block}{R\'esultats observ\'es}
+\begin{itemize}
+    \item Latence moyenne : $\sim$16-20 ms (vs 125 ms Cloud-only)
+    \item Fog nodes actifs : 50-80 en phase congestion
+    \item R\'eduction bande passante vers Cloud : 95\%
+\end{itemize}
+\end{block}

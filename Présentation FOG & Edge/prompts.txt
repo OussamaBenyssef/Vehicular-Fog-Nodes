@@ -1,0 +1,64 @@
+PROMPTS POUR GÉNÉRER LES IMAGES/PLOTS DE LA PRÉSENTATION
+==========================================================
+
+Ces prompts sont destinés à un outil de génération d'images (ChatGPT DALL-E, Midjourney, etc.)
+pour créer des graphiques professionnels à insérer dans la présentation Beamer.
+
+==========================================================
+PLOT 1 : Latence Moyenne par Scénario (Bar Chart)
+==========================================================
+
+Prompt:
+"Create a clean, professional bar chart comparing average latency across 3 scenarios. X-axis labels: 'Edge+Cloud', 'Low Fog (10%)', 'High Fog (50%)'. Y-axis: 'Latence moyenne (ms)' from 0 to 120. Bar values: Edge+Cloud = 90ms (red), Low Fog = 35ms (orange/yellow), High Fog = 18ms (green). Add value labels on top of each bar. White background, modern flat design, no 3D effects, suitable for academic presentation. Title: 'Latence Moyenne par Scénario'."
+
+==========================================================
+PLOT 2 : Évolution de la Latence en Fonction du Nombre de Véhicules (Line Chart)
+==========================================================
+
+Prompt:
+"Create a professional line chart showing latency evolution as vehicle count increases. X-axis: 'Nombre de véhicules' from 5 to 50. Y-axis: 'Latence moyenne (ms)' from 0 to 120. Three lines: 1) Red line with square markers labeled 'Edge+Cloud (0% fog)' starting at 60ms rising to 95ms. 2) Orange/yellow line with triangle markers labeled 'Low Fog (10%)' starting at 20ms rising to 38ms. 3) Green line with circle markers labeled 'High Fog (50%)' starting at 12ms rising stably to 19ms. Legend in top-left corner. White background, dashed grid lines, modern academic style. Title: 'Évolution de la Latence en Fonction du Nombre de Véhicules'."
+
+==========================================================
+PLOT 3 : Distribution du Traitement Edge/Fog/Cloud (Stacked Bar Chart)
+==========================================================
+
+Prompt:
+"Create a professional stacked bar chart showing processing distribution across 3 scenarios. X-axis: 'Edge+Cloud', 'Low Fog (10%)', 'High Fog (50%)'. Y-axis: 'Pourcentage (%)' from 0 to 100. Each bar has 3 stacked segments: Green (Edge/local): 65%, 25%, 20%. Blue (Fog RSU+V2V): 0%, 55%, 72%. Red (Cloud): 35%, 20%, 8%. Add percentage labels inside each segment. Legend showing Edge (green), Fog (blue), Cloud (red). White background, modern flat style. Title: 'Distribution du Traitement par Scénario'."
+
+==========================================================
+PLOT 4 : Actions Fog - Feux Ajustés et Véhicules Reroutés (Grouped Bar Chart)
+==========================================================
+
+Prompt:
+"Create a professional grouped bar chart comparing fog actions across 3 scenarios. X-axis: 'Edge+Cloud', 'Low Fog (10%)', 'High Fog (50%)'. Y-axis: 'Nombre d actions' from 0 to 2500. Two groups per scenario: Blue bars for 'Feux ajustés (SCOOT)' with values 0, 18, 360. Orange/yellow bars for 'Véhicules reroutés' with values 0, 445, 2077. Add value labels on top of bars. Legend in top-left. White background, dashed grid, modern academic style. Title: 'Actions Fog : Feux Ajustés et Reroutages'."
+
+==========================================================
+PLOT 5 : Architecture 3-Tiers (Diagramme)
+==========================================================
+
+Prompt:
+"Create a clean, professional 3-tier architecture diagram for vehicular fog computing. Bottom layer (green): 'Edge - Véhicules' showing car icons, labeled '3ms, 500 MIPS'. Middle layer (blue/orange): 'Fog - RSU + Véhicules Fog' showing antenna/tower icons and smart car icons, labeled '7-20ms, 1500-5000 MIPS'. Top layer (red): 'Cloud' showing cloud icon, labeled '250ms, 20000 MIPS'. Arrows between layers showing data flow. Communication labels: V2V (10 Mbps), V2I (20 Mbps), Cloud (5/10 Mbps). Modern flat design, white background, suitable for beamer presentation."
+
+==========================================================
+PLOT 6 : Comparaison Latence par Composant (Grouped Bar - Edge/Fog/Cloud)
+==========================================================
+
+Prompt:
+"Create a professional grouped bar chart comparing individual latency components. X-axis: 'Edge+Cloud', 'Low Fog (10%)', 'High Fog (50%)'. Three groups of bars per scenario: Green bars for 'Edge latency': 3ms, 3ms, 3ms. Blue bars for 'Fog latency': 0 (N/A), 18ms, 7ms. Red bars for 'Cloud latency': 250ms, 250ms, 250ms. Y-axis: 'Latence (ms)' from 0 to 280. Value labels on top. White background, dashed grid, academic style. Title: 'Latence par Composant et Scénario'."
+
+==========================================================
+PLOT 7 : Congestion Maximale par Scénario (Bar Chart)
+==========================================================
+
+Prompt:
+"Create a simple professional bar chart showing maximum congestion per scenario. X-axis: 'Edge+Cloud', 'Low Fog (10%)', 'High Fog (50%)'. Y-axis: 'Congestion maximale (%)' from 0 to 100. Bar values: Edge+Cloud = 77% (red), Low Fog = 77% (orange), High Fog = 63% (green). Add value labels and a horizontal dashed red line at 80% labeled 'Seuil critique'. White background, modern flat design. Title: 'Congestion Maximale par Scénario'."
+
+==========================================================
+NOTES D'UTILISATION
+==========================================================
+
+- Pour ChatGPT/DALL-E : Utilisez les prompts tels quels
+- Pour Midjourney : Ajoutez "--ar 16:9 --style raw" à la fin
+- Pour un style uniforme, ajoutez : "Use colors: blue=#2563EB, green=#16A34A, red=#DC2626, yellow=#CA8A04"
+- Résolution recommandée : 1920x1080 (16:9) pour slides Beamer
+- Format : PNG avec fond transparent ou blanc

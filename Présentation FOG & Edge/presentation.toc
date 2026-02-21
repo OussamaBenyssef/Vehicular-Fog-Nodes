@@ -1,8 +1,0 @@
-\babel@toc {french}{}\relax 
-\beamer@sectionintoc {1}{Contexte, Motivation et Concepts de Base}{3}{0}{1}
-\beamer@sectionintoc {2}{Architecture Fog-Assisted Vehicular Computing}{8}{0}{2}
-\beamer@sectionintoc {3}{Vehicular Fog Nodes et Fonctionnement Interne}{12}{0}{3}
-\beamer@sectionintoc {4}{Gestion des Ressources, Mobilit\'e et S\'ecurit\'e}{16}{0}{4}
-\beamer@sectionintoc {5}{Cas Pratique : Notre Simulation}{23}{0}{5}
-\beamer@sectionintoc {6}{Avantages, Limites et Comparaison}{27}{0}{6}
-\beamer@sectionintoc {7}{Perspectives et Conclusion}{30}{0}{7}

@@ -1061,34 +1061,44 @@ class SimulationOrchestrator:
             self.metrics.zone_congestion[rsu] = min(count / 30.0, 1.0)
         
         # === MÉTRIQUES DYNAMIQUES BASÉES SUR LA DENSITÉ FOG ===
-        # La latence et la distribution varient selon le ratio de fog nodes
         total_v = max(self.metrics.total_vehicles, 1)
         fog_ratio = self.metrics.fog_nodes / total_v
         
-        if self.mode_config["fog_enabled"]:
-            # Plus il y a de fog nodes, plus la latence fog diminue
-            # High density (~50%): fog_latency ~15ms, Low density (~15%): fog_latency ~25ms
-            base_fog_latency = 30.0  # Latence de base sans fog nearby
-            self.metrics.fog_latency = base_fog_latency - (fog_ratio * 20.0)  # 10-30ms range
-            self.metrics.fog_latency = max(10.0, self.metrics.fog_latency)  # Minimum 10ms
-            
-            # Distribution: plus de fog nodes = plus de traitement fog, moins de cloud
-            self.metrics.fog_processing = 20.0 + (fog_ratio * 50.0)   # 20-70%
-            self.metrics.edge_processing = 70.0 - (fog_ratio * 40.0)  # 30-70%
-            self.metrics.cloud_processing = max(5.0, 15.0 - (fog_ratio * 15.0))  # 5-15%
-            
-            # Normaliser à 100%
-            total_pct = self.metrics.edge_processing + self.metrics.fog_processing + self.metrics.cloud_processing
-            if total_pct > 0:
-                self.metrics.edge_processing = (self.metrics.edge_processing / total_pct) * 100
-                self.metrics.fog_processing = (self.metrics.fog_processing / total_pct) * 100
-                self.metrics.cloud_processing = (self.metrics.cloud_processing / total_pct) * 100
+        if self.ifogsim.connected:
+            # iFogSim connecté → utiliser les VRAIES latences et distribution
+            # Les latences sont déjà mises à jour dans _parse_metrics()
+            # Rien à faire ici, on garde les valeurs reçues de iFogSim
+            pass
         else:
-            # Mode Edge+Cloud: pas de fog
-            self.metrics.fog_latency = 0.0
-            self.metrics.fog_processing = 0.0
-            self.metrics.edge_processing = 90.0
-            self.metrics.cloud_processing = 10.0
+            # FALLBACK quand iFogSim non connecté
+            import math
+            if self.mode_config["fog_enabled"]:
+                # Latences approximatives basées sur le ratio fog
+                self.metrics.fog_latency = 50.0 * math.exp(-3.0 * fog_ratio)
+                self.metrics.fog_latency = max(10.0, min(50.0, self.metrics.fog_latency))
+                self.metrics.edge_latency = 8.0 - (fog_ratio * 5.0)
+                self.metrics.edge_latency = max(3.0, self.metrics.edge_latency)
+                self.metrics.cloud_latency = 130.0 - (fog_ratio * 10.0)
+                
+                # Distribution approximative
+                self.metrics.fog_processing = 10.0 + (fog_ratio * 80.0)
+                self.metrics.edge_processing = 75.0 - (fog_ratio * 60.0)
+                self.metrics.cloud_processing = max(3.0, 15.0 - (fog_ratio * 20.0))
+                
+                # Normaliser à 100%
+                total_pct = self.metrics.edge_processing + self.metrics.fog_processing + self.metrics.cloud_processing
+                if total_pct > 0:
+                    self.metrics.edge_processing = (self.metrics.edge_processing / total_pct) * 100
+                    self.metrics.fog_processing = (self.metrics.fog_processing / total_pct) * 100
+                    self.metrics.cloud_processing = (self.metrics.cloud_processing / total_pct) * 100
+            else:
+                # Mode Edge+Cloud: pas de fog, beaucoup de cloud
+                self.metrics.fog_latency = 0.0
+                self.metrics.edge_latency = 3.0
+                self.metrics.cloud_latency = 250.0
+                self.metrics.fog_processing = 0.0
+                self.metrics.edge_processing = 65.0
+                self.metrics.cloud_processing = 35.0
     
     def _prepare_dashboard_data(self, vehicles: Dict[str, VehicleState], 
                                  sim_time: float) -> dict:

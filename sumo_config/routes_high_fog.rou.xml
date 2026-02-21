@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Configuration SUMO - SCÉNARIO: BEAUCOUP de véhicules Fog-capable (~50%) -->
-<!-- DÉBIT TOTAL: ~2000 véh/h pour simuler la congestion -->
+<!-- Configuration SUMO - SCÉNARIO: HIGH FOG (~50% fog-capable) -->
+<!-- DÉBIT TOTAL: 2000 véh/h - 50% fog-capable, 50% standard -->
+<!-- SYNCHRONISÉ avec les autres scénarios pour comparaison équitable -->
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
         xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
 
@@ -14,55 +15,48 @@
     <vType id="truck" accel="1.0" decel="4.0" sigma="0.5" length="10" 
            minGap="3" maxSpeed="25" guiShape="truck" color="128,0,128"/>
 
-    <!-- Routes -->
-    <route id="route_we_1" edges="E_N1_J1 E_J1_J2 E_J2_N2"/>
-    <route id="route_ew_1" edges="E_N2_J2 E_J2_J1 E_J1_N1"/>
-    <route id="route_we_alt" edges="E_N1_J3 E_J3_J4 E_J4_N2"/>
-    <route id="route_sn_1" edges="E_S1_J1 E_J1_J3 E_J3_N3"/>
-    <route id="route_sn_2" edges="E_S2_J2 E_J2_J4 E_J4_N4"/>
-    <route id="route_ns_1" edges="E_N3_J3 E_J3_J1 E_J1_S1"/>
-    <route id="route_ns_2" edges="E_N4_J4 E_J4_J2 E_J2_S2"/>
-    <route id="route_cross_1" edges="E_N1_J1 E_J1_J3 E_J3_J4 E_J4_N4"/>
-    <route id="route_cross_2" edges="E_S1_J1 E_J1_J2 E_J2_J4 E_J4_N4"/>
+    <!-- Routes (IDENTIQUES pour tous les scénarios) -->
+    <route id="route_we" edges="E_N1_J1 E_J1_J2 E_J2_N2"/>
+    <route id="route_ew" edges="E_N2_J2 E_J2_J1 E_J1_N1"/>
+    <route id="route_sn" edges="E_S1_J1 E_J1_J3 E_J3_N3"/>
+    <route id="route_ns" edges="E_N3_J3 E_J3_J1 E_J1_S1"/>
+    <route id="route_cross" edges="E_S1_J1 E_J1_J2 E_J2_J4 E_J4_N4"/>
 
     <!-- ============================================================ -->
-    <!-- SCÉNARIO: BEAUCOUP DE FOG NODES (~50% fog-capable) -->
-    <!-- DÉBIT TOTAL: ~2000 véh/h -->
-    <!-- Répartition: 50% standard, 50% fog-capable -->
+    <!-- SCÉNARIO: HIGH FOG (50% fog-capable, 50% standard) -->
+    <!-- DÉBIT TOTAL: 2000 véh/h - TIMING SYNCHRONISÉ -->
     <!-- ============================================================ -->
     
-    <!-- Véhicules standards (50% = ~1000 véh/h) -->
-    <flow id="high_we_car" type="car" route="route_we_1" 
-          begin="0" end="300" vehsPerHour="260" departLane="best"/>
-    <flow id="high_ew_car" type="car" route="route_ew_1" 
-          begin="0" end="300" vehsPerHour="240" departLane="best"/>
-    <flow id="high_sn_car" type="car" route="route_sn_1" 
-          begin="0" end="300" vehsPerHour="210" departLane="best"/>
-    <flow id="high_ns_car" type="car" route="route_ns_1" 
-          begin="0" end="300" vehsPerHour="180" departLane="best"/>
-    <flow id="high_cross_car" type="car" route="route_cross_2" 
-          begin="0" end="300" vehsPerHour="110" departLane="best"/>
-    <!-- Sous-total car: 1000 véh/h -->
+    <!-- Route WE: 500 véh/h (50% car = 250, 50% fog = 250) -->
+    <flow id="we_car" type="car" route="route_we" 
+          begin="0" end="300" vehsPerHour="250" departLane="best" departSpeed="max"/>
+    <flow id="we_fog" type="fog_capable" route="route_we" 
+          begin="0" end="300" vehsPerHour="250" departLane="best" departSpeed="max"/>
     
-    <!-- BEAUCOUP de véhicules fog-capable (50% = ~1000 véh/h) -->
-    <flow id="high_we_fog" type="fog_capable" route="route_we_1" 
-          begin="0" end="300" vehsPerHour="260" departLane="best"/>
-    <flow id="high_ew_fog" type="fog_capable" route="route_ew_1" 
-          begin="0" end="300" vehsPerHour="240" departLane="best"/>
-    <flow id="high_sn_fog" type="fog_capable" route="route_sn_2" 
-          begin="0" end="300" vehsPerHour="210" departLane="best"/>
-    <flow id="high_ns_fog" type="fog_capable" route="route_ns_2" 
-          begin="0" end="300" vehsPerHour="180" departLane="best"/>
-    <flow id="high_cross_fog" type="fog_capable" route="route_cross_1" 
-          begin="0" end="300" vehsPerHour="110" departLane="best"/>
-    <!-- Sous-total fog: 1000 véh/h -->
+    <!-- Route EW: 450 véh/h (50% car = 225, 50% fog = 225) -->
+    <flow id="ew_car" type="car" route="route_ew" 
+          begin="0" end="300" vehsPerHour="225" departLane="best" departSpeed="max"/>
+    <flow id="ew_fog" type="fog_capable" route="route_ew" 
+          begin="0" end="300" vehsPerHour="225" departLane="best" departSpeed="max"/>
     
-    <!-- Camions et bus -->
-    <flow id="high_truck" type="truck" route="route_we_1" 
-          begin="0" end="300" period="60" departLane="best"/>
-    <flow id="high_bus" type="bus" route="route_cross_1" 
-          begin="0" end="300" period="90" departLane="best"/>
+    <!-- Route SN: 400 véh/h (50% car = 200, 50% fog = 200) -->
+    <flow id="sn_car" type="car" route="route_sn" 
+          begin="0" end="300" vehsPerHour="200" departLane="best" departSpeed="max"/>
+    <flow id="sn_fog" type="fog_capable" route="route_sn" 
+          begin="0" end="300" vehsPerHour="200" departLane="best" departSpeed="max"/>
+    
+    <!-- Route NS: 350 véh/h (50% car = 175, 50% fog = 175) -->
+    <flow id="ns_car" type="car" route="route_ns" 
+          begin="0" end="300" vehsPerHour="175" departLane="best" departSpeed="max"/>
+    <flow id="ns_fog" type="fog_capable" route="route_ns" 
+          begin="0" end="300" vehsPerHour="175" departLane="best" departSpeed="max"/>
+    
+    <!-- Route Cross: 300 véh/h (50% car = 150, 50% fog = 150) -->
+    <flow id="cross_car" type="car" route="route_cross" 
+          begin="0" end="300" vehsPerHour="150" departLane="best" departSpeed="max"/>
+    <flow id="cross_fog" type="fog_capable" route="route_cross" 
+          begin="0" end="300" vehsPerHour="150" departLane="best" departSpeed="max"/>
 
-    <!-- TOTAL: ~2000 véh/h -->
+    <!-- TOTAL: 2000 véh/h (50% fog-capable = 1000 véh/h) -->
 
 </routes>

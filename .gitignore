@@ -24,3 +24,6 @@ Desktop.ini
 
 # Presentation (separate directory)
 Présentation FOG & Edge/
+
+# Generated plots (reproducible from logs)
+plots_output/

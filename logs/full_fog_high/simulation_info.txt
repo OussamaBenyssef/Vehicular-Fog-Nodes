@@ -1,5 +1,5 @@
 Scenario: full_fog_high
-Started: 2026-02-22 14:12:46
+Started: 2026-02-22 15:08:41
 Mode: full_fog
 Fog density: high
 ---

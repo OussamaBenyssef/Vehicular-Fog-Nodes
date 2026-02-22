@@ -1,0 +1,33 @@
+=== SIMULATION SUMMARY: full_fog_high ===
+Duration: 0s
+Total vehicles (max): 0
+Fog nodes: 0
+Tasks processed: 943
+
+--- Latency ---
+Edge: 3.0 ms
+Fog:  12.7 ms
+Cloud: 250.0 ms
+Average (weighted): 18.7 ms
+
+--- Processing Distribution ---
+Edge:  60.0%
+Fog:   35.0%
+Cloud: 5.0%
+
+--- SCOOT Actions ---
+Traffic lights adjusted: 3
+Vehicles rerouted: 0
+
+--- Energy ---
+Energy per task: 350 mJ
+  Local: 300 mJ (60%)
+  Fog:   40 mJ (35%)
+  Cloud: 9 mJ (5%)
+
+--- Congestion ---
+Max congestion: 0%
+  RSU_J1: 0%
+  RSU_J2: 0%
+  RSU_J3: 0%
+  RSU_J4: 0%

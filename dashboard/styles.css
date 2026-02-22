@@ -638,6 +638,13 @@ h3 {
     white-space: nowrap;
 }
 
+/* === Energy Card === */
+.energy-card {
+    border-left: 3px solid #d97706 !important;
+    background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
+}
+
+
 /* === Print Styles === */
 @media print {
     .header {

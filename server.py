@@ -122,6 +122,192 @@ class SimulationMetrics:
     incident_active: bool = False
 
 
+class MetricsLogger:
+    """
+    Enregistre les métriques de simulation dans des fichiers CSV.
+    Un fichier par métrique, séparé par scénario.
+    Structure: logs/<scenario>/latency.csv, distribution.csv, etc.
+    """
+    
+    def __init__(self, mode: 'SimulationMode', fog_density: str = "high"):
+        # Déterminer le nom du scénario
+        if mode == SimulationMode.EDGE_CLOUD:
+            self.scenario_name = "edge_cloud"
+        else:
+            self.scenario_name = f"full_fog_{fog_density}"
+        
+        # Créer le dossier logs/<scenario>
+        self.logs_dir = Path(__file__).parent / "logs" / self.scenario_name
+        self.logs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Créer les fichiers CSV avec headers
+        self.files = {}
+        self._init_csv("latency", ["time", "edge_ms", "fog_ms", "cloud_ms", "avg_weighted_ms"])
+        self._init_csv("distribution", ["time", "edge_pct", "fog_pct", "cloud_pct"])
+        self._init_csv("vehicles", ["time", "total_vehicles", "fog_nodes", "fog_ratio_pct"])
+        self._init_csv("scoot_actions", ["time", "tl_adjusted_total", "rerouted_total"])
+        self._init_csv("congestion", ["time", "RSU_J1", "RSU_J2", "RSU_J3", "RSU_J4", "max_congestion_pct"])
+        self._init_csv("energy", ["time", "energy_per_task_mJ", "local_component_mJ", "fog_component_mJ", "cloud_component_mJ"])
+        self._init_csv("tasks", ["time", "tasks_processed", "offloading_count"])
+        
+        # Timestamp de démarrage
+        self.start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Écrire un fichier info
+        info_path = self.logs_dir / "simulation_info.txt"
+        with open(info_path, 'w', encoding='utf-8') as f:
+            f.write(f"Scenario: {self.scenario_name}\n")
+            f.write(f"Started: {self.start_time}\n")
+            f.write(f"Mode: {mode.value}\n")
+            f.write(f"Fog density: {fog_density}\n")
+            f.write(f"---\n")
+            f.write(f"Files:\n")
+            f.write(f"  latency.csv      - Edge/Fog/Cloud latency per step\n")
+            f.write(f"  distribution.csv - Processing distribution (Edge/Fog/Cloud %)\n")
+            f.write(f"  vehicles.csv     - Vehicle counts and fog ratio\n")
+            f.write(f"  scoot_actions.csv- SCOOT traffic light adjustments and rerouting\n")
+            f.write(f"  congestion.csv   - Per-RSU congestion levels\n")
+            f.write(f"  energy.csv       - Energy consumption per task\n")
+            f.write(f"  tasks.csv        - Tasks processed count\n")
+        
+        print(f"[MetricsLogger] Logging to: {self.logs_dir}")
+    
+    def _init_csv(self, name: str, headers: list):
+        """Crée un fichier CSV avec les headers."""
+        filepath = self.logs_dir / f"{name}.csv"
+        self.files[name] = filepath
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(",".join(headers) + "\n")
+    
+    def _append(self, name: str, values: list):
+        """Ajoute une ligne au fichier CSV."""
+        filepath = self.files[name]
+        with open(filepath, 'a', encoding='utf-8') as f:
+            f.write(",".join(str(v) for v in values) + "\n")
+    
+    def log(self, metrics: SimulationMetrics, offloading_count: int = 0):
+        """Enregistre toutes les métriques pour un pas de simulation."""
+        t = round(metrics.simulation_time, 1)
+        
+        # 1. Latence
+        avg_latency = (
+            metrics.edge_latency * metrics.edge_processing +
+            metrics.fog_latency * metrics.fog_processing +
+            metrics.cloud_latency * metrics.cloud_processing
+        ) / 100.0
+        self._append("latency", [
+            t,
+            round(metrics.edge_latency, 2),
+            round(metrics.fog_latency, 2),
+            round(metrics.cloud_latency, 2),
+            round(avg_latency, 2)
+        ])
+        
+        # 2. Distribution du traitement
+        self._append("distribution", [
+            t,
+            round(metrics.edge_processing, 1),
+            round(metrics.fog_processing, 1),
+            round(metrics.cloud_processing, 1)
+        ])
+        
+        # 3. Véhicules
+        total_v = max(metrics.total_vehicles, 1)
+        fog_ratio = round((metrics.fog_nodes / total_v) * 100, 1)
+        self._append("vehicles", [
+            t,
+            metrics.total_vehicles,
+            metrics.fog_nodes,
+            fog_ratio
+        ])
+        
+        # 4. Actions SCOOT
+        self._append("scoot_actions", [
+            t,
+            metrics.total_tl_adjusted,
+            metrics.total_rerouted
+        ])
+        
+        # 5. Congestion par zone
+        cong = metrics.zone_congestion
+        max_cong = round(max(cong.values()) * 100, 1) if cong else 0.0
+        self._append("congestion", [
+            t,
+            round(cong.get("RSU_J1", 0) * 100, 1),
+            round(cong.get("RSU_J2", 0) * 100, 1),
+            round(cong.get("RSU_J3", 0) * 100, 1),
+            round(cong.get("RSU_J4", 0) * 100, 1),
+            max_cong
+        ])
+        
+        # 6. Énergie (même formule que la présentation)
+        # E_local = 500 mJ, E_fog = 115 mJ, E_cloud = 185 mJ
+        e_local = (metrics.edge_processing / 100) * 500
+        e_fog = (metrics.fog_processing / 100) * 115
+        e_cloud = (metrics.cloud_processing / 100) * 185
+        energy_total = e_local + e_fog + e_cloud
+        self._append("energy", [
+            t,
+            round(energy_total, 1),
+            round(e_local, 1),
+            round(e_fog, 1),
+            round(e_cloud, 1)
+        ])
+        
+        # 7. Tâches
+        self._append("tasks", [
+            t,
+            metrics.tasks_processed,
+            offloading_count
+        ])
+    
+    def write_summary(self, metrics: SimulationMetrics):
+        """Écrit un résumé final de la simulation."""
+        summary_path = self.logs_dir / "summary.txt"
+        
+        avg_latency = (
+            metrics.edge_latency * metrics.edge_processing +
+            metrics.fog_latency * metrics.fog_processing +
+            metrics.cloud_latency * metrics.cloud_processing
+        ) / 100.0
+        
+        e_local = (metrics.edge_processing / 100) * 500
+        e_fog = (metrics.fog_processing / 100) * 115
+        e_cloud = (metrics.cloud_processing / 100) * 185
+        energy_total = e_local + e_fog + e_cloud
+        
+        with open(summary_path, 'w', encoding='utf-8') as f:
+            f.write(f"=== SIMULATION SUMMARY: {self.scenario_name} ===\n")
+            f.write(f"Duration: {metrics.simulation_time:.0f}s\n")
+            f.write(f"Total vehicles (max): {metrics.total_vehicles}\n")
+            f.write(f"Fog nodes: {metrics.fog_nodes}\n")
+            f.write(f"Tasks processed: {metrics.tasks_processed}\n")
+            f.write(f"\n--- Latency ---\n")
+            f.write(f"Edge: {metrics.edge_latency:.1f} ms\n")
+            f.write(f"Fog:  {metrics.fog_latency:.1f} ms\n")
+            f.write(f"Cloud: {metrics.cloud_latency:.1f} ms\n")
+            f.write(f"Average (weighted): {avg_latency:.1f} ms\n")
+            f.write(f"\n--- Processing Distribution ---\n")
+            f.write(f"Edge:  {metrics.edge_processing:.1f}%\n")
+            f.write(f"Fog:   {metrics.fog_processing:.1f}%\n")
+            f.write(f"Cloud: {metrics.cloud_processing:.1f}%\n")
+            f.write(f"\n--- SCOOT Actions ---\n")
+            f.write(f"Traffic lights adjusted: {metrics.total_tl_adjusted}\n")
+            f.write(f"Vehicles rerouted: {metrics.total_rerouted}\n")
+            f.write(f"\n--- Energy ---\n")
+            f.write(f"Energy per task: {energy_total:.0f} mJ\n")
+            f.write(f"  Local: {e_local:.0f} mJ ({metrics.edge_processing:.0f}%)\n")
+            f.write(f"  Fog:   {e_fog:.0f} mJ ({metrics.fog_processing:.0f}%)\n")
+            f.write(f"  Cloud: {e_cloud:.0f} mJ ({metrics.cloud_processing:.0f}%)\n")
+            f.write(f"\n--- Congestion ---\n")
+            max_cong = max(metrics.zone_congestion.values()) * 100 if metrics.zone_congestion else 0
+            f.write(f"Max congestion: {max_cong:.0f}%\n")
+            for rsu, cong in metrics.zone_congestion.items():
+                f.write(f"  {rsu}: {cong*100:.0f}%\n")
+        
+        print(f"[MetricsLogger] Summary written to: {summary_path}")
+
+
 class SUMOConnector:
     """Connecteur SUMO via TraCI"""
     
@@ -581,6 +767,9 @@ class SimulationOrchestrator:
         self.tasks_fog_vehicle = 0
         self.tasks_cloud = 0
         
+        # Logger de métriques
+        self.logger = MetricsLogger(mode, current_fog_density)
+        
     def start(self):
         """Démarre la simulation"""
         print(f"[Orchestrateur] Démarrage simulation en mode: {self.mode_config['name']}")
@@ -626,6 +815,11 @@ class SimulationOrchestrator:
         
         # Préparer données dashboard
         self.dashboard_data = self._prepare_dashboard_data(vehicles, sim_time)
+        
+        # Logger les métriques (toutes les 1s de simulation)
+        if int(sim_time * 10) % 10 == 0:  # Chaque seconde
+            offloading = self.metrics.fog_nodes if self.mode_config['fog_enabled'] else 0
+            self.logger.log(self.metrics, offloading)
         
         # Vérifier fin simulation
         if not self.sumo.is_running():
@@ -1213,6 +1407,8 @@ class SimulationOrchestrator:
     def stop(self):
         """Arrête la simulation"""
         self.running = False
+        # Écrire le résumé final des métriques
+        self.logger.write_summary(self.metrics)
         self.sumo.close()
         self.ifogsim.close()
         print("[Orchestrateur] Simulation terminée")

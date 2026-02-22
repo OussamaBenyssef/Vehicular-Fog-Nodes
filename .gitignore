@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# SUMO output (regenerated each run)
+sumo_config/*_output.xml
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# Java compiled (also in ifogsim/.gitignore)
+*.class
+
+# Presentation (separate directory)
+Présentation FOG & Edge/

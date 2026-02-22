@@ -1,0 +1,13 @@
+Scenario: edge_cloud
+Started: 2026-02-22 14:20:31
+Mode: edge_cloud
+Fog density: high
+---
+Files:
+  latency.csv      - Edge/Fog/Cloud latency per step
+  distribution.csv - Processing distribution (Edge/Fog/Cloud %)
+  vehicles.csv     - Vehicle counts and fog ratio
+  scoot_actions.csv- SCOOT traffic light adjustments and rerouting
+  congestion.csv   - Per-RSU congestion levels
+  energy.csv       - Energy consumption per task
+  tasks.csv        - Tasks processed count

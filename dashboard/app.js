@@ -495,6 +495,25 @@ function updateStats(metrics) {
     if (cloudLatencyEl) cloudLatencyEl.textContent = `${cloudLatency} ms`;
     if (fogLatencyAvgEl) fogLatencyAvgEl.textContent = `${avgLatency.toFixed(0)} ms`;
     if (fogBarFillEl) fogBarFillEl.style.width = `${(avgLatency / cloudLatency) * 100}%`;
+
+    // Énergie par tâche (mJ) — même formule que la présentation
+    // E_local = 500 mJ, E_fog = 115 mJ, E_cloud = 185 mJ
+    const edgePct = metrics.processing?.edge || 70;
+    const fogPct = metrics.processing?.fog || 0;
+    const cloudPct = metrics.processing?.cloud || 30;
+    const energyPerTask = (edgePct / 100) * 500 + (fogPct / 100) * 115 + (cloudPct / 100) * 185;
+    const energyEl = document.getElementById('energyPerTask');
+    if (energyEl) {
+        energyEl.textContent = `${energyPerTask.toFixed(0)} mJ`;
+        // Color coding: green if < 250, yellow if < 350, red otherwise
+        if (energyPerTask < 250) {
+            energyEl.style.color = '#16A34A';
+        } else if (energyPerTask < 350) {
+            energyEl.style.color = '#CA8A04';
+        } else {
+            energyEl.style.color = '#DC2626';
+        }
+    }
 }
 
 // Canvas init

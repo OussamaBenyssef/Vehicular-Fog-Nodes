@@ -1,0 +1,13 @@
+Scenario: full_fog_high
+Started: 2026-02-22 14:12:46
+Mode: full_fog
+Fog density: high
+---
+Files:
+  latency.csv      - Edge/Fog/Cloud latency per step
+  distribution.csv - Processing distribution (Edge/Fog/Cloud %)
+  vehicles.csv     - Vehicle counts and fog ratio
+  scoot_actions.csv- SCOOT traffic light adjustments and rerouting
+  congestion.csv   - Per-RSU congestion levels
+  energy.csv       - Energy consumption per task
+  tasks.csv        - Tasks processed count

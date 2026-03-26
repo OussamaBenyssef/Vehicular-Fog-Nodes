@@ -149,6 +149,7 @@ class MetricsLogger:
         self._init_csv("congestion", ["time", "RSU_J1", "RSU_J2", "RSU_J3", "RSU_J4", "max_congestion_pct"])
         self._init_csv("energy", ["time", "energy_per_task_mJ", "local_component_mJ", "fog_component_mJ", "cloud_component_mJ"])
         self._init_csv("tasks", ["time", "tasks_processed", "offloading_count"])
+        self._init_csv("kpi", ["time", "task_completion_rate_pct", "deadline_miss_ratio_pct", "rsu_utilization_pct", "fogv_utilization_pct", "throughput_mbps", "total_tasks", "total_deadline_misses"])
         
         # Timestamp de démarrage
         self.start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -259,6 +260,19 @@ class MetricsLogger:
             t,
             metrics.tasks_processed,
             offloading_count
+        ])
+    
+    def log_kpi(self, t: float, kpi_stats: dict):
+        """Enregistre les KPIs IEEE pour un pas de simulation."""
+        self._append("kpi", [
+            round(t, 1),
+            round(kpi_stats.get('taskCompletionRate', 100.0), 2),
+            round(kpi_stats.get('deadlineMissRatio', 0.0), 2),
+            round(kpi_stats.get('rsuUtilization', 0.0), 2),
+            round(kpi_stats.get('fogVUtilization', 0.0), 2),
+            round(kpi_stats.get('throughputMbps', 0.0), 3),
+            kpi_stats.get('totalTasks', 0),
+            kpi_stats.get('totalDeadlineMisses', 0)
         ])
     
     def write_summary(self, metrics: SimulationMetrics):
@@ -638,6 +652,7 @@ class IFogSimConnector:
         self.scoot_decisions: dict = {}  # Décisions SCOOT reçues
         self.offloading_vehicle_ids: set = set()  # IDs des véhicules en offloading
         self.traffic_collector = TrafficDataCollector()  # Collecteur SCOOT
+        self.mobility_stats: dict = {}  # Stats conscience de la mobilité
     
     def connect(self) -> bool:
         """Connecte au serveur iFogSim"""
@@ -699,7 +714,7 @@ class IFogSimConnector:
         latency = data.get("latency", {})
         self.metrics.edge_latency = latency.get("edge", 5.2)
         self.metrics.fog_latency = latency.get("fog", 22.4)
-        self.metrics.cloud_latency = latency.get("cloud", 125.3)
+        self.metrics.cloud_latency = latency.get("cloud", 250.0)
         
         # Parser les statistiques d'offloading
         offloading_stats = data.get("offloadingStats", {})
@@ -737,6 +752,12 @@ class IFogSimConnector:
         scoot_actions = self.scoot_decisions.get("actions", [])
         if scoot_actions:
             print(f"[SCOOT] Reçu {len(scoot_actions)} décision(s) SCOOT - Cycle: {self.scoot_decisions.get('globalCycleTime', 60)}s")
+        
+        # Parser les stats de mobilité
+        self.mobility_stats = data.get("mobilityStats", {})
+        
+        # Parser les KPIs IEEE
+        self.kpi_stats = data.get("kpiStats", {})
     
     def close(self):
         """Ferme connexion"""
@@ -820,6 +841,9 @@ class SimulationOrchestrator:
         if int(sim_time * 10) % 10 == 0:  # Chaque seconde
             offloading = self.metrics.fog_nodes if self.mode_config['fog_enabled'] else 0
             self.logger.log(self.metrics, offloading)
+            # Logger les KPIs IEEE
+            if self.ifogsim.connected and self.ifogsim.kpi_stats:
+                self.logger.log_kpi(sim_time, self.ifogsim.kpi_stats)
         
         # Vérifier fin simulation
         if not self.sumo.is_running():
@@ -1272,7 +1296,7 @@ class SimulationOrchestrator:
                 self.metrics.fog_latency = max(10.0, min(50.0, self.metrics.fog_latency))
                 self.metrics.edge_latency = 8.0 - (fog_ratio * 5.0)
                 self.metrics.edge_latency = max(3.0, self.metrics.edge_latency)
-                self.metrics.cloud_latency = 130.0 - (fog_ratio * 10.0)
+                self.metrics.cloud_latency = 250.0
                 
                 # Distribution approximative
                 self.metrics.fog_processing = 10.0 + (fog_ratio * 80.0)
@@ -1362,7 +1386,9 @@ class SimulationOrchestrator:
                 "totalTlAdjusted": self.metrics.total_tl_adjusted,
                 "incidentActive": self.metrics.incident_active
             },
-            "scootData": self._get_scoot_dashboard_data()
+            "scootData": self._get_scoot_dashboard_data(),
+            "mobilityData": self.ifogsim.mobility_stats if self.ifogsim.connected else {},
+            "kpiData": self.ifogsim.kpi_stats if self.ifogsim.connected else {}
         }
     
     def _get_scoot_dashboard_data(self) -> dict:
@@ -1522,12 +1548,12 @@ def main():
     print("  Simulation Fog-Assisted Vehicular Computing")
     print("  SUMO + iFogSim + Dashboard Temps Réel")
     print("=" * 60)
-    print(f"\n  📊 MODE: {mode_info['name']}")
-    print(f"  📝 {mode_info['description']}")
-    print(f"  🚗 FOG DENSITY: {fog_desc}")
-    print(f"  🌫️  Fog: {'✅' if mode_info['fog_enabled'] else '❌'}")
-    print(f"  ☁️  Cloud: {'✅' if mode_info['cloud_enabled'] else '❌'}")
-    print(f"  🚦 SCOOT: {'✅' if mode_info['scoot_enabled'] else '❌'}")
+    print(f"\n  [MODE] {mode_info['name']}")
+    print(f"  [DESC] {mode_info['description']}")
+    print(f"  [DENSITY] {fog_desc}")
+    print(f"  [Fog] {'ENABLED' if mode_info['fog_enabled'] else 'DISABLED'}")
+    print(f"  [Cloud] {'ENABLED' if mode_info['cloud_enabled'] else 'DISABLED'}")
+    print(f"  [SCOOT] {'ENABLED' if mode_info['scoot_enabled'] else 'DISABLED'}")
     print("=" * 60)
     
     if args.test:

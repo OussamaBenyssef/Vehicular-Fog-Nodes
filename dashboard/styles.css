@@ -645,6 +645,225 @@ h3 {
 }
 
 
+/* === Mobility Awareness Panel === */
+.mobility-section {
+    border-top: 1px solid var(--border-light);
+}
+
+.mobility-section h2 {
+    color: #7c3aed;
+}
+
+.mobility-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+}
+
+.mobility-card {
+    padding: 0.75rem;
+    text-align: center;
+    border-right: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.mobility-card:nth-child(2n) {
+    border-right: none;
+}
+
+.mobility-card:nth-last-child(-n+2) {
+    border-bottom: none;
+}
+
+.mobility-card .stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    line-height: 1.2;
+}
+
+.mobility-card .stat-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-top: 0.2rem;
+}
+
+.mobility-card.handover-card {
+    border-left: 3px solid #3b82f6;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+}
+
+.mobility-card.handover-card .stat-value {
+    color: #1d4ed8;
+}
+
+.mobility-card.forced-card {
+    border-left: 3px solid #ef4444;
+    background: linear-gradient(135deg, #fef2f2, #fecaca);
+}
+
+.mobility-card.forced-card .stat-value {
+    color: #b91c1c;
+}
+
+.mobility-card.time-card {
+    border-left: 3px solid #22c55e;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+}
+
+.mobility-card.time-card .stat-value {
+    color: #15803d;
+}
+
+.mobility-card.zone-card {
+    border-left: 3px solid #8b5cf6;
+    background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+}
+
+.mobility-card.zone-card .stat-value {
+    color: #6d28d9;
+}
+
+.mobility-bar-container {
+    padding: 0.75rem 1rem;
+}
+
+.mobility-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.mobility-bar-label span:last-child {
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+.mobility-bar {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+
+.mobility-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #22c55e, #3b82f6);
+    transition: width 0.5s ease, background 0.5s ease;
+    width: 0%;
+}
+
+
+/* === KPI IEEE Panel === */
+.panel-kpi h2 {
+    color: #0284c7;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+    padding: 0.75rem;
+}
+
+.kpi-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.85rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.kpi-card .kpi-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.kpi-card .kpi-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.kpi-card .kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.kpi-card .kpi-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.kpi-card .kpi-sub {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+/* Card color variants */
+.kpi-tcr::before { background: #22c55e; }
+.kpi-tcr { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+
+.kpi-dmr::before { background: #f59e0b; }
+.kpi-dmr { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+
+.kpi-rsu::before { background: #3b82f6; }
+.kpi-rsu { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
+
+.kpi-fogv::before { background: #8b5cf6; }
+.kpi-fogv { background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
+
+.kpi-throughput::before { background: #06b6d4; }
+.kpi-throughput { background: linear-gradient(135deg, #ecfeff, #cffafe); }
+
+/* Utilization bars inside KPI cards */
+.kpi-bar {
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    margin-top: 0.25rem;
+}
+
+.kpi-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #22c55e, #3b82f6);
+    transition: width 0.5s ease, background 0.5s ease;
+    width: 0%;
+}
+
+
 /* === Print Styles === */
 @media print {
     .header {

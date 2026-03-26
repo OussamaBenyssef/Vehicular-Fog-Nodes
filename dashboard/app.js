@@ -119,6 +119,16 @@ function updateDashboard(data) {
         fogEnabled = data.mode.fog_enabled || false;
         updateModeDisplay(data.mode);
     }
+
+    // Mobility awareness data
+    if (data.mobilityData) {
+        updateMobilityPanel(data.mobilityData);
+    }
+
+    // KPI IEEE data
+    if (data.kpiData) {
+        updateKPIPanel(data.kpiData);
+    }
 }
 
 // Mise à jour affichage du mode de simulation
@@ -644,5 +654,120 @@ function updateScootPanel(scootData) {
                 `;
             }).join('');
         }
+    }
+}
+
+// Mise à jour panel Conscience de la Mobilité
+function updateMobilityPanel(mobilityData) {
+    const handovers = document.getElementById('mobilityHandovers');
+    const forcedLocal = document.getElementById('mobilityForcedLocal');
+    const avgTimeToExit = document.getElementById('mobilityAvgTimeToExit');
+    const vehiclesInZone = document.getElementById('mobilityVehiclesInZone');
+    const riskPct = document.getElementById('mobilityRiskPct');
+    const riskBar = document.getElementById('mobilityRiskBar');
+
+    if (handovers) handovers.textContent = mobilityData.totalHandover || 0;
+    if (forcedLocal) forcedLocal.textContent = mobilityData.totalForcedLocal || 0;
+    if (vehiclesInZone) vehiclesInZone.textContent = mobilityData.vehiclesInZone || 0;
+
+    if (avgTimeToExit) {
+        const avgTime = mobilityData.avgTimeToExit || 0;
+        avgTimeToExit.textContent = avgTime > 0 ? `${avgTime.toFixed(1)} s` : '-- s';
+        // Color coding: green if > 5s, yellow if > 2s, red otherwise
+        if (avgTime > 5) {
+            avgTimeToExit.style.color = '#16A34A';
+        } else if (avgTime > 2) {
+            avgTimeToExit.style.color = '#CA8A04';
+        } else if (avgTime > 0) {
+            avgTimeToExit.style.color = '#DC2626';
+        }
+    }
+
+    // Disconnection risk: ratio of (handovers + forcedLocal) per step vs vehicles in zone
+    const stepHandover = mobilityData.handoverPenaltyStep || 0;
+    const stepForced = mobilityData.forcedLocalStep || 0;
+    const inZone = mobilityData.vehiclesInZone || 1;
+    const riskRatio = Math.min(((stepHandover + stepForced) / inZone) * 100, 100);
+
+    if (riskPct) riskPct.textContent = `${riskRatio.toFixed(0)}%`;
+    if (riskBar) {
+        riskBar.style.width = `${riskRatio}%`;
+        if (riskRatio > 50) {
+            riskBar.style.background = 'linear-gradient(90deg, #f59e0b, #dc2626)';
+        } else if (riskRatio > 20) {
+            riskBar.style.background = 'linear-gradient(90deg, #22c55e, #f59e0b)';
+        } else {
+            riskBar.style.background = 'linear-gradient(90deg, #22c55e, #3b82f6)';
+        }
+    }
+}
+
+// Mise à jour panel KPIs IEEE
+function updateKPIPanel(kpi) {
+    // 1. Task Completion Rate
+    const tcr = document.getElementById('kpiTCR');
+    const tcrSub = document.getElementById('kpiTCRSub');
+    if (tcr) {
+        const val = kpi.taskCompletionRate || 0;
+        tcr.textContent = `${val.toFixed(1)}%`;
+        tcr.style.color = val >= 95 ? '#16A34A' : val >= 80 ? '#CA8A04' : '#DC2626';
+        if (tcrSub) {
+            tcrSub.textContent = `${kpi.totalTasksCompleted || 0} / ${kpi.totalTasksInZone || 0} tâches`;
+        }
+    }
+
+    // 2. Deadline Miss Ratio
+    const dmr = document.getElementById('kpiDMR');
+    const dmrSub = document.getElementById('kpiDMRSub');
+    if (dmr) {
+        const val = kpi.deadlineMissRatio || 0;
+        dmr.textContent = `${val.toFixed(1)}%`;
+        dmr.style.color = val <= 5 ? '#16A34A' : val <= 15 ? '#CA8A04' : '#DC2626';
+        if (dmrSub) {
+            dmrSub.textContent = `${kpi.totalDeadlineMisses || 0} / ${kpi.totalTasks || 0} > 100ms`;
+        }
+    }
+
+    // 3. RSU Utilization
+    const rsu = document.getElementById('kpiRSU');
+    const rsuBar = document.getElementById('kpiRSUBar');
+    if (rsu) {
+        const val = kpi.rsuUtilization || 0;
+        rsu.textContent = `${val.toFixed(1)}%`;
+        rsu.style.color = val <= 60 ? '#16A34A' : val <= 85 ? '#CA8A04' : '#DC2626';
+        if (rsuBar) {
+            rsuBar.style.width = `${Math.min(val, 100)}%`;
+            rsuBar.style.background = val <= 60
+                ? 'linear-gradient(90deg, #22c55e, #3b82f6)'
+                : val <= 85
+                    ? 'linear-gradient(90deg, #f59e0b, #ca8a04)'
+                    : 'linear-gradient(90deg, #ef4444, #dc2626)';
+        }
+    }
+
+    // 4. Fog Vehicle Utilization
+    const fogv = document.getElementById('kpiFogV');
+    const fogvBar = document.getElementById('kpiFogVBar');
+    if (fogv) {
+        const val = kpi.fogVUtilization || 0;
+        fogv.textContent = `${val.toFixed(1)}%`;
+        fogv.style.color = val <= 60 ? '#16A34A' : val <= 85 ? '#CA8A04' : '#DC2626';
+        if (fogvBar) {
+            fogvBar.style.width = `${Math.min(val, 100)}%`;
+            fogvBar.style.background = val <= 60
+                ? 'linear-gradient(90deg, #22c55e, #3b82f6)'
+                : val <= 85
+                    ? 'linear-gradient(90deg, #f59e0b, #ca8a04)'
+                    : 'linear-gradient(90deg, #ef4444, #dc2626)';
+        }
+    }
+
+    // 5. Throughput
+    const tp = document.getElementById('kpiThroughput');
+    const tpSub = document.getElementById('kpiThroughputSub');
+    if (tp) {
+        const val = kpi.throughputMbps || 0;
+        tp.textContent = `${val.toFixed(2)} Mb/s`;
+        tp.style.color = '#3b82f6';
     }
 }

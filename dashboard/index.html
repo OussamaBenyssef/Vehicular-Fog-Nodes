@@ -107,6 +107,38 @@
                     <div class="stat-label">Énergie/Tâche</div>
                 </div>
             </div>
+
+            <!-- Panel Conscience de la Mobilité -->
+            <div class="mobility-section">
+                <h2>🚗 Conscience de la Mobilité</h2>
+                <div class="mobility-stats-grid">
+                    <div class="mobility-card handover-card">
+                        <div class="stat-value" id="mobilityHandovers">0</div>
+                        <div class="stat-label">Handovers (+75ms)</div>
+                    </div>
+                    <div class="mobility-card forced-card">
+                        <div class="stat-value" id="mobilityForcedLocal">0</div>
+                        <div class="stat-label">Forcé Local</div>
+                    </div>
+                    <div class="mobility-card time-card">
+                        <div class="stat-value" id="mobilityAvgTimeToExit">-- s</div>
+                        <div class="stat-label">Temps Moy. Sortie</div>
+                    </div>
+                    <div class="mobility-card zone-card">
+                        <div class="stat-value" id="mobilityVehiclesInZone">0</div>
+                        <div class="stat-label">Véh. en Zone RSU</div>
+                    </div>
+                </div>
+                <div class="mobility-bar-container">
+                    <div class="mobility-bar-label">
+                        <span>Risque de déconnexion</span>
+                        <span id="mobilityRiskPct">0%</span>
+                    </div>
+                    <div class="mobility-bar">
+                        <div class="mobility-bar-fill" id="mobilityRiskBar"></div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Panel 4: SCOOT Adaptatif -->
@@ -167,9 +199,58 @@
                 <div id="scootActionsList"></div>
             </div>
         </section>
+
+        <!-- Panel 5: KPIs IEEE -->
+        <section class="panel panel-kpi">
+            <h2>📊 KPIs IEEE — Performance Temps Réel</h2>
+            <div class="kpi-grid">
+                <div class="kpi-card kpi-tcr">
+                    <div class="kpi-icon">✅</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="kpiTCR">--</div>
+                        <div class="kpi-label">Task Completion Rate</div>
+                        <div class="kpi-sub" id="kpiTCRSub">Tâches complétées dans la zone</div>
+                    </div>
+                </div>
+                <div class="kpi-card kpi-dmr">
+                    <div class="kpi-icon">⏱️</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="kpiDMR">--</div>
+                        <div class="kpi-label">Deadline Miss Ratio</div>
+                        <div class="kpi-sub" id="kpiDMRSub">Seuil: 100ms (SCOOT)</div>
+                    </div>
+                </div>
+                <div class="kpi-card kpi-rsu">
+                    <div class="kpi-icon">📡</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="kpiRSU">--</div>
+                        <div class="kpi-label">RSU Utilization</div>
+                        <div class="kpi-sub">Capacité: 5000 MIPS</div>
+                    </div>
+                    <div class="kpi-bar"><div class="kpi-bar-fill" id="kpiRSUBar"></div></div>
+                </div>
+                <div class="kpi-card kpi-fogv">
+                    <div class="kpi-icon">🚗</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="kpiFogV">--</div>
+                        <div class="kpi-label">Fog Vehicle Utilization</div>
+                        <div class="kpi-sub">Capacité: 1500 MIPS/node</div>
+                    </div>
+                    <div class="kpi-bar"><div class="kpi-bar-fill" id="kpiFogVBar"></div></div>
+                </div>
+                <div class="kpi-card kpi-throughput">
+                    <div class="kpi-icon">⚡</div>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="kpiThroughput">--</div>
+                        <div class="kpi-label">Fog Throughput</div>
+                        <div class="kpi-sub" id="kpiThroughputSub">RSU + Fog Vehicles</div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=6"></script>
 </body>
 
 </html>

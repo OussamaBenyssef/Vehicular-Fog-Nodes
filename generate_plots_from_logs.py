@@ -39,6 +39,15 @@ def read_csv(scenario, filename):
         for h in headers:
             data[h] = []
         for row in reader:
+            # Filtrer pour ne garder que le régime permanent (Steady-State) de 50s à 300s
+            try:
+                if 'time' in row:
+                    t = float(row['time'])
+                    if t < 50.0 or t > 300.0:
+                        continue
+            except ValueError:
+                pass
+            
             for h in headers:
                 try:
                     data[h].append(float(row[h]))
@@ -60,7 +69,6 @@ def compute_averages():
             r['edge_lat'] = np.mean(lat['edge_ms'])
             r['fog_lat'] = np.mean(lat['fog_ms'])
             r['cloud_lat'] = np.mean(lat['cloud_ms'])
-
         dist = read_csv(sc, 'distribution.csv')
         if dist is not None:
             r['edge_pct'] = np.mean(dist['edge_pct'])
@@ -120,8 +128,10 @@ def plot1_latence_moyenne(avgs):
     for i, val in enumerate(values):
         if i > 0:
             reduction = ((baseline - val) / baseline) * 100
-            ax.text(i, val * 0.5, f'-{reduction:.0f}%', ha='center', va='center',
-                    fontsize=16, fontweight='bold', color='white')
+            # Si la barre est trop petite, on met le texte plus bas ou on réduit la police
+            y_pos = max(val * 0.5, 5) # Au moins 5 pour ne pas être écrasé en bas
+            ax.text(i, y_pos, f'-{reduction:.0f}%', ha='center', va='center',
+                    fontsize=12, fontweight='bold', color='white')
 
     plt.tight_layout()
     out = OUTPUT_DIR / 'plot1_latence_moyenne.png'
@@ -153,15 +163,10 @@ def plot2_evolution_latence():
     ax.set_xlabel('Simulation Time (s)', fontweight='bold', fontsize=13)
     ax.set_ylabel('Average Latency (ms)', fontweight='bold', fontsize=13)
     ax.set_title('Latency Evolution Over Time', fontweight='bold', fontsize=15, pad=15)
-    ax.legend(fontsize=12, framealpha=0.9, loc='upper right')
+    ax.legend(fontsize=12, framealpha=0.9, loc='best')
     ax.grid(alpha=0.3, linestyle='--')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-
-    # Add congestion phase annotation
-    ax.axvspan(250, 350, alpha=0.1, color='red', label='Congestion Phase')
-    ax.annotate('Congestion Phase', xy=(300, ax.get_ylim()[1]*0.95),
-                ha='center', fontsize=10, color='#c0392b', fontstyle='italic')
 
     plt.tight_layout()
     out = OUTPUT_DIR / 'plot2_evolution_latence.png'
@@ -210,14 +215,14 @@ def plot3_distribution(avgs):
     ax.set_xticks(x)
     ax.set_xticklabels(labels, fontsize=12)
     ax.set_ylim(0, 105)
-    ax.legend(loc='upper right', fontsize=11, framealpha=0.9)
+    ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=3, fontsize=11, framealpha=0.9)
     ax.grid(axis='y', alpha=0.3, linestyle='--')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
     plt.tight_layout()
     out = OUTPUT_DIR / 'plot3_distribution.png'
-    plt.savefig(out, dpi=200, bbox_inches='tight', facecolor='white')
+    plt.savefig(out, dpi=200, facecolor='white', bbox_inches='tight')
     plt.close()
     print(f"[OK] {out.name}")
 
@@ -409,6 +414,168 @@ def plot8_energy_comparison(avgs):
 
 
 # ============================================================
+# PLOT 9: KPI — Task Completion Rate & Deadline Miss Ratio (bar)
+# ============================================================
+def plot9_kpi_rates(avgs):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    scenarios = [s for s in SCENARIOS.keys() if s != 'edge_cloud']
+    labels = [SCENARIOS[s]['short'] for s in scenarios]
+    colors = [SCENARIOS[s]['color'] for s in scenarios]
+    x = np.arange(len(scenarios))
+
+    # Task Completion Rate
+    tcr_vals = [avgs[s].get('task_completion_rate', 100.0) for s in scenarios]
+    bars1 = ax1.bar(x, tcr_vals, 0.5, color=colors, alpha=0.9, edgecolor='white', linewidth=2)
+    for bar, val in zip(bars1, tcr_vals):
+        ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
+                 f'{val:.1f}%', ha='center', va='bottom', fontweight='bold', fontsize=13)
+    ax1.set_ylabel('Task Completion Rate (%)', fontweight='bold', fontsize=13)
+    ax1.set_title('Task Completion Rate', fontweight='bold', fontsize=14, pad=10)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(labels, fontsize=12)
+    ax1.set_ylim(0, 110)
+    ax1.grid(axis='y', alpha=0.3, linestyle='--')
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+
+    # Deadline Miss Ratio
+    dmr_vals = [avgs[s].get('deadline_miss_ratio', 0.0) for s in scenarios]
+    bars2 = ax2.bar(x, dmr_vals, 0.5, color=colors, alpha=0.9, edgecolor='white', linewidth=2)
+    for bar, val in zip(bars2, dmr_vals):
+        ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.3,
+                 f'{val:.1f}%', ha='center', va='bottom', fontweight='bold', fontsize=13)
+    ax2.set_ylabel('Deadline Miss Ratio (%)', fontweight='bold', fontsize=13)
+    ax2.set_title('Deadline Miss Ratio (>100ms)', fontweight='bold', fontsize=14, pad=10)
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(labels, fontsize=12)
+    ax2.set_ylim(0, max(dmr_vals) * 1.3 if max(dmr_vals) > 0 else 10)
+    ax2.grid(axis='y', alpha=0.3, linestyle='--')
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+
+    plt.tight_layout(pad=2)
+    out = OUTPUT_DIR / 'plot9_kpi_rates.png'
+    plt.savefig(out, dpi=200, bbox_inches='tight', facecolor='white')
+    plt.close()
+    print(f"[OK] {out.name}")
+
+
+# ============================================================
+# PLOT 10: KPI — Resource Utilization (grouped bar)
+# ============================================================
+def plot10_resource_utilization(avgs):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    scenarios = [s for s in SCENARIOS.keys() if s != 'edge_cloud']
+    labels = [SCENARIOS[s]['short'] for s in scenarios]
+    x = np.arange(len(scenarios))
+    width = 0.3
+
+    rsu_vals = [avgs[s].get('rsu_utilization', 0.0) for s in scenarios]
+    fogv_vals = [avgs[s].get('fogv_utilization', 0.0) for s in scenarios]
+
+    bars1 = ax.bar(x - width/2, rsu_vals, width, label='RSU (5000 MIPS)',
+                   color='#3498db', alpha=0.9, edgecolor='white', linewidth=1.5)
+    bars2 = ax.bar(x + width/2, fogv_vals, width, label='Fog Vehicles (1500 MIPS)',
+                   color='#2ecc71', alpha=0.9, edgecolor='white', linewidth=1.5)
+
+    for bar, val in zip(bars1, rsu_vals):
+        if val > 1:
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
+                    f'{val:.1f}%', ha='center', va='bottom', fontsize=10, fontweight='bold')
+    for bar, val in zip(bars2, fogv_vals):
+        if val > 1:
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
+                    f'{val:.1f}%', ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+    ax.set_ylabel('Resource Utilization (%)', fontweight='bold', fontsize=13)
+    ax.set_title('Resource Utilization — RSU vs Fog Vehicles', fontweight='bold', fontsize=15, pad=15)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=12)
+    ax.set_ylim(0, max(max(rsu_vals), max(fogv_vals)) * 1.3 if max(max(rsu_vals), max(fogv_vals)) > 0 else 10)
+    ax.legend(fontsize=11, framealpha=0.9)
+    ax.grid(axis='y', alpha=0.3, linestyle='--')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    out = OUTPUT_DIR / 'plot10_resource_utilization.png'
+    plt.savefig(out, dpi=200, bbox_inches='tight', facecolor='white')
+    plt.close()
+    print(f"[OK] {out.name}")
+
+
+# ============================================================
+# PLOT 11: KPI — Throughput Evolution (line chart)
+# ============================================================
+def plot11_throughput():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    for sc in SCENARIOS:
+        kpi = read_csv(sc, 'kpi.csv')
+        if kpi is not None and 'throughput_mbps' in kpi:
+            window = 10
+            vals = kpi['throughput_mbps']
+            if len(vals) > window:
+                smoothed = np.convolve(vals, np.ones(window)/window, mode='valid')
+                t_smooth = kpi['time'][window-1:]
+            else:
+                smoothed = vals
+                t_smooth = kpi['time']
+            ax.plot(t_smooth, smoothed, label=SCENARIOS[sc]['short'],
+                    color=SCENARIOS[sc]['color'], linewidth=2.5, alpha=0.9)
+
+    ax.set_xlabel('Simulation Time (s)', fontweight='bold', fontsize=13)
+    ax.set_ylabel('System Throughput (Mb/s)', fontweight='bold', fontsize=13)
+    ax.set_title('Global System Throughput Over Time', fontweight='bold', fontsize=15, pad=15)
+    ax.legend(fontsize=12, framealpha=0.9)
+    ax.grid(alpha=0.3, linestyle='--')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    out = OUTPUT_DIR / 'plot11_throughput.png'
+    plt.savefig(out, dpi=200, bbox_inches='tight', facecolor='white')
+    plt.close()
+    print(f"[OK] {out.name}")
+
+
+# ============================================================
+# PLOT 12: KPI — Deadline Miss Evolution (line chart)
+# ============================================================
+def plot12_deadline_miss_evolution():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    for sc in SCENARIOS:
+        if sc == 'edge_cloud':
+            continue
+        kpi = read_csv(sc, 'kpi.csv')
+        if kpi is not None and 'deadline_miss_ratio_pct' in kpi:
+            window = 10
+            vals = kpi['deadline_miss_ratio_pct']
+            if len(vals) > window:
+                smoothed = np.convolve(vals, np.ones(window)/window, mode='valid')
+                t_smooth = kpi['time'][window-1:]
+            else:
+                smoothed = vals
+                t_smooth = kpi['time']
+            ax.plot(t_smooth, smoothed, label=SCENARIOS[sc]['short'],
+                    color=SCENARIOS[sc]['color'], linewidth=2.5, alpha=0.9)
+
+    ax.axhline(y=5, color='#e74c3c', linestyle='--', alpha=0.5, linewidth=1.5, label='Target (<5%)')
+    ax.set_xlabel('Simulation Time (s)', fontweight='bold', fontsize=13)
+    ax.set_ylabel('Deadline Miss Ratio (%)', fontweight='bold', fontsize=13)
+    ax.set_title('Deadline Miss Ratio Over Time (100ms Threshold)', fontweight='bold', fontsize=15, pad=15)
+    ax.legend(fontsize=12, framealpha=0.9)
+    ax.grid(alpha=0.3, linestyle='--')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    out = OUTPUT_DIR / 'plot12_deadline_miss_evolution.png'
+    plt.savefig(out, dpi=200, bbox_inches='tight', facecolor='white')
+    plt.close()
+    print(f"[OK] {out.name}")
+
+
+# ============================================================
 # MAIN
 # ============================================================
 if __name__ == '__main__':
@@ -431,6 +598,22 @@ if __name__ == '__main__':
     # Compute averages
     avgs = compute_averages()
 
+    # Add KPI averages
+    for sc in SCENARIOS:
+        kpi = read_csv(sc, 'kpi.csv')
+        if kpi is not None and 'task_completion_rate_pct' in kpi and len(kpi['task_completion_rate_pct']) > 0:
+            avgs[sc]['task_completion_rate'] = float(np.nan_to_num(np.mean(kpi['task_completion_rate_pct'])))
+            avgs[sc]['deadline_miss_ratio'] = float(np.nan_to_num(np.mean(kpi['deadline_miss_ratio_pct'])))
+            avgs[sc]['rsu_utilization'] = float(np.nan_to_num(np.mean(kpi['rsu_utilization_pct'])))
+            avgs[sc]['fogv_utilization'] = float(np.nan_to_num(np.mean(kpi['fogv_utilization_pct'])))
+            avgs[sc]['throughput'] = float(np.nan_to_num(np.mean(kpi['throughput_mbps'])))
+        else:
+            avgs[sc]['task_completion_rate'] = 100.0
+            avgs[sc]['deadline_miss_ratio'] = 0.0
+            avgs[sc]['rsu_utilization'] = 0.0
+            avgs[sc]['fogv_utilization'] = 0.0
+            avgs[sc]['throughput'] = 0.0
+
     # Print summary
     print("\n--- Computed averages from logs ---")
     for sc in SCENARIOS:
@@ -440,6 +623,7 @@ if __name__ == '__main__':
         print(f"    Distribution: Edge={r.get('edge_pct', 0):.0f}% Fog={r.get('fog_pct', 0):.0f}% Cloud={r.get('cloud_pct', 0):.0f}%")
         print(f"    Energy: {r.get('energy_total', 0):.0f} mJ (local={r.get('energy_local', 0):.0f}, fog={r.get('energy_fog', 0):.0f}, cloud={r.get('energy_cloud', 0):.0f})")
         print(f"    TL adjusted: {r.get('tl_adjusted', 0)}, Rerouted: {r.get('rerouted', 0)}")
+        print(f"    KPI: TCR={r.get('task_completion_rate', 0):.1f}% DMR={r.get('deadline_miss_ratio', 0):.1f}% RSU={r.get('rsu_utilization', 0):.1f}% FogV={r.get('fogv_utilization', 0):.1f}% Throughput={r.get('throughput', 0):.3f} Mb/s")
     print()
 
     # Generate all plots
@@ -450,6 +634,11 @@ if __name__ == '__main__':
     plot6_latence_composant(avgs)
     plot7_congestion()
     plot8_energy_comparison(avgs)
+    plot9_kpi_rates(avgs)
+    plot10_resource_utilization(avgs)
+    plot11_throughput()
+    plot12_deadline_miss_evolution()
 
-    print(f"\n==> 7 plots generated in {OUTPUT_DIR}/")
+    print(f"\n==> 11 plots generated in {OUTPUT_DIR}/")
     print("    (plot5_architecture.png is unchanged - architecture diagram)")
+

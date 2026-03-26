@@ -105,7 +105,7 @@ class SimulationMetrics:
     # Latences mesurées (ms)
     edge_latency: float = 5.2
     fog_latency: float = 22.4
-    cloud_latency: float = 125.3
+    cloud_latency: float = 250.0
     
     # Distribution traitement (%)
     edge_processing: float = 70.0
@@ -861,7 +861,7 @@ class SimulationOrchestrator:
         self.tasks_edge += fog_capable_count
         
         # Véhicules normaux: envoi au cloud (simulation latence)
-        cloud_delay = 130.0  # ms - latence cloud typique
+        cloud_delay = 250.0  # ms - latence cloud (2×RTT_WAN + traitement)
         self.tasks_cloud += normal_count
         
         # Décisions Fog basiques via Cloud (très lentes)
